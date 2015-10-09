@@ -2,3 +2,5 @@
 appengine-generated/
 *~
 *pyc
+main_ref.py
+myadmin.py
