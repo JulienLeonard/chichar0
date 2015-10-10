@@ -20,6 +20,11 @@ indexes:
   ancestor: yes
   properties:
   - name: date
+
+- kind: Sentence
+  ancestor: yes
+  properties:
+  - name: date
     direction: desc
 
 - kind: ViewStat

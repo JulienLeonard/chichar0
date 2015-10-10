@@ -25,3 +25,4 @@ class ViewStat(ndb.Model):
     chichar       = ndb.StructuredProperty(Chichar)
     sentence      = ndb.StructuredProperty(Sentence)
     date          = ndb.DateTimeProperty(auto_now_add=True)
+    
