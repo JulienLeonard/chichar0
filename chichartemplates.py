@@ -145,6 +145,21 @@ STAT_CHI_CHAR_TEMPLATE = """\
     <div align="center">
     <h1>Char stats</h1>
     <hr>
+    <table>
+    <tr>
+    <td>
+    <form action="/" method="get">
+      <div><input type="submit" value="Home"></div>
+    </form>
+    </td>
+    <td>
+    <form action="/listchichars" method="get">
+      <div><input type="submit" value="List"></div>
+    </form>
+    </td>  
+    </tr>
+    </table>
+    <hr>
     <table> 
     <tr>
     <td>
@@ -178,4 +193,14 @@ CHI_CHAR_SENTENCES_TEMPLATE = """\
     </td>
     </tr>
    </table>
+"""
+
+LOAD_CHICHARS = """\
+<head>
+  <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
+</head>
+    <form action="/loadchichars" method="post">
+      <div><textarea name="chichars" rows="10" cols="40"></textarea></div>
+      <div><input type="submit" value="Load chichars"></div>
+   </form>
 """

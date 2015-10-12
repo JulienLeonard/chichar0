@@ -1,13 +1,32 @@
+ADD_SENTENCE_TEMPLATE = """\
+<head>
+  <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
+</head>
+    <form action="/doaddsentence" method="post">
+      <div><textarea name="sentencechichar"        rows="2" cols="40"></textarea></div>
+      <div><textarea name="sentencepronunciation"  rows="2" cols="40"></textarea></div>
+      <div><textarea name="sentencetranslation"    rows="2" cols="40"></textarea></div>
+      <div><input type="submit" value="Add sentence"></div>
+    </form>
+    <form action="/" method="get">
+      <div><input type="submit" value="Home"></div>
+    </form>
+"""
+
+
 LIST_SENTENCE_TEMPLATE = """\
 <head>
   <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
 </head>
+    <div align="center">
+    <h1>Sentences list</h1>
     <hr>
     %s
     <hr>
     <form action="/" method="get">
       <div><input type="submit" value="Home"></div>
     </form>
+    </div>
 """
 
 LOAD_SENTENCES = """\
@@ -92,4 +111,54 @@ VIEW_SENTENCE_USER_TEMPLATE = """\
     </tr>
     </table>
    </div>
+"""
+
+STAT_SENTENCE_TEMPLATE = """\
+<head>
+  <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
+</head>
+    <div align="center">
+    <h1>Sentences Stats</h1>
+    <hr>
+    <table>
+    <tr>
+    <td>
+    <form action="/" method="get">
+      <div><input type="submit" value="Home"></div>
+    </form>
+    </td>
+    <td>
+    <form action="/listsentences" method="get">
+      <div><input type="submit" value="List"></div>
+    </form>
+    </td>  
+    </tr>
+    </table>
+    <hr>
+    <table> 
+    <tr>
+    <td>
+    Sentences number
+    </td>
+    <td>
+    %s
+    </td>
+    </tr>
+    </table>
+    <hr>
+    <table>
+    <tr>
+    <td>
+    <form action="/" method="get">
+      <div><input type="submit" value="Home"></div>
+    </form>
+    </td>
+    <td>
+    <form action="/listsentences" method="get">
+      <div><input type="submit" value="List"></div>
+    </form>
+    </td>  
+    </tr>
+    </table>
+    </div>
 """

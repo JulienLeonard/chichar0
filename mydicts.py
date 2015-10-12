@@ -3,6 +3,7 @@ from google.appengine.ext import ndb
 
 CHICHARDICT  = 'chichardict'
 SENTENCEDICT = 'sentencedict'
+WORDDICT = 'worddict'
 USERDICT     = 'userdict'
 
 def dict_key(dict_name=CHICHARDICT):

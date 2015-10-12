@@ -10,6 +10,17 @@ indexes:
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
 
+- kind: CharTest
+  ancestor: yes
+  properties:
+  - name: date
+    direction: desc
+
+- kind: Chichar
+  ancestor: yes
+  properties:
+  - name: date
+
 - kind: Chichar
   ancestor: yes
   properties:
@@ -30,5 +41,16 @@ indexes:
 - kind: ViewStat
   properties:
   - name: email
+  - name: date
+    direction: desc
+
+- kind: Word
+  ancestor: yes
+  properties:
+  - name: date
+
+- kind: Word
+  ancestor: yes
+  properties:
   - name: date
     direction: desc

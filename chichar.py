@@ -75,16 +75,19 @@ class DoAddChiChar(webapp2.RequestHandler):
         self.redirect("/viewchichar/" + chichar.key.urlsafe())
 # [END DoAddChiChar]
 
+def clearchichars(request):
+    chichar = Chichar()
+    chichars_query = Chichar.query()
+    chichars = chichars_query.fetch()
+        
+    for chichar in chichars:
+        deletechichar(request,chichar.key.urlsafe())
+        
+
 # [START ClearChiChars]
 class ClearChiChars(webapp2.RequestHandler):
     def post(self):
-        chichar = Chichar()
-        chichars_query = Chichar.query()
-        chichars = chichars_query.fetch()
-        
-        for chichar in chichars:
-            chichar.key.delete()
-
+        clearchichars()
         self.redirect('/')
 # [END ClearChiChars]
 
@@ -160,21 +163,19 @@ class SaveChiChar(webapp2.RequestHandler):
         self.redirect("/viewchichar/" + chichar.key.urlsafe())
 # [END SaveChiChar]
     
+def deletechichar(request,chicharid):
+    dict_name   = request.request.get('dict_name', CHICHARDICT)
+    chichar_key = ndb.Key(urlsafe=chicharid)
+    chichar     = chichar_key.get()
+    chichar.key.delete()
+    
 
 # [START DeleteChiChar]
 class DeleteChiChar(webapp2.RequestHandler):
     def post(self,chicharid):
-
-        dict_name = self.request.get('dict_name', CHICHARDICT)
-        chichar_key = ndb.Key(urlsafe=chicharid)
-        # chichar = Chichar(parent=dict_key(dict_name));
-        chichar = chichar_key.get()
-
-        # removestats(self,chichar)
-
-        chichar.key.delete()
-
+        deletechichar(self,chicharid)
         self.redirect("/listchichars")
+
 # [END DeleteChiChar]
 
 # [START StatChiChars]
@@ -240,8 +241,58 @@ class ChiCharSentences(webapp2.RequestHandler):
         
         self.response.write(CHI_CHAR_SENTENCES_TEMPLATE % ( chichar.chichar, sentencelist, chicharid) )
         self.response.write('</body></html>')
-
 # [END ChiCharSentences]
+
+# [START LoadChicharFile]
+class LoadChicharFile(webapp2.RequestHandler):
+    def get(self):
+        self.response.write('<html><body>')
+
+        self.response.write(LOAD_CHICHARS)
+
+        self.response.write('</body></html>')
+# [END LoadChicharFile]
+
+# [START LoadChichars]
+class LoadChichars(webapp2.RequestHandler):
+    def post(self):
+        self.response.write('<html><body>')
+
+        sdict_name = self.request.get('dict_name', CHICHARDICT)
+
+        for chicharline in self.request.get('chichars').split("\n"):
+            if len(chicharline) > 0:                
+                parts = chicharline.split(";")
+                self.response.write("<div> new chichar</div>")
+                for part in parts:
+                    self.response.write("<div>  " + part + "</div>\n")
+
+                if len(parts) == 3:
+
+                    chi           = parts[0].strip()
+                    translation   = parts[1].strip()
+                    pronunciation = parts[2].strip()
+
+                    cdict_name = self.request.get('dict_name', CHICHARDICT)
+                    chichars_query = Chichar.query(Chichar.chichar == chi)
+                    qresult = chichars_query.fetch(1)
+
+                    if len(qresult) == 0:
+                        self.response.write("need to add " + chi)
+                        chichar = Chichar(parent=dict_key(cdict_name))
+                        chichar.chichar        = chi
+                        chichar.translation    = translation
+                        chichar.pronunciation  = pronunciation
+                        chichar.put()
+                    else:
+                    # TODO:check everything is the same  
+                        self.response.write("char " + chi + " already known")
+                        
+
+        self.response.write('</body></html>')
+
+# [END LoadChichars]
+
 
 
 

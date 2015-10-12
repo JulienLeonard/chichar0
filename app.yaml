@@ -12,6 +12,18 @@ handlers:
 - url: /stylesheets
   static_dir: stylesheets
 
+- url: /javascript
+  static_dir: javascript
+
+- url: /javascript/jsvg
+  static_dir: javascript/jsvg
+
+- url: /javascript/other
+  static_dir: javascript/other
+
+- url: /javascript/drawing
+  static_dir: javascript/drawing
+
 - url: .*
   script: main.app
 

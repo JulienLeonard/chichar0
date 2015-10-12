@@ -31,6 +31,8 @@ class ListSentences(webapp2.RequestHandler):
                 if not len(qresult) == 0:
                     ochichar = qresult[0]
                     sentencelist = sentencelist + "<td><a href=\"/viewchichar/" + ochichar.key.urlsafe() + "\">" + ochichar.chichar + "</a></td>"
+            viewsentenceform = "<form action=\"/viewsentence/" + sentence.key.urlsafe() + "\" method=\"get\"><div class=\"charaction\"><input type=\"submit\" value=\"+\"></div></form>"
+            sentencelist = sentencelist + "<td>" + viewsentenceform + "</td>"
             sentencelist = sentencelist + "</tr>"
         sentencelist = sentencelist + "</table>"
 
@@ -101,16 +103,19 @@ class LoadSentences(webapp2.RequestHandler):
 
 # [END LoadSentences]
 
+def clearsentences(request):
+    sentence        = Sentence()
+    sentences_query = Sentence.query()
+    sentences       = sentences_query.fetch()
+        
+    for sentence in sentences:
+        deletesentence(request,sentence.key.urlsafe())
+        
+
 # [START ClearSentences]
 class ClearSentences(webapp2.RequestHandler):
     def post(self):
-        sentence = Sentence()
-        sentences_query = Sentence.query()
-        sentences = sentences_query.fetch()
-        
-        for sentence in sentences:
-            sentence.key.delete()
-
+        clearsentences(self)
         self.redirect('/')
 # [END ClearSentences]
 
@@ -161,6 +166,32 @@ class ViewSentence(webapp2.RequestHandler):
         self.response.write('</body></html>')
 # [END ViewSentence]
 
+# [START AddSentence]
+class AddSentence(webapp2.RequestHandler):
+    def get(self):
+        user = users.get_current_user()
+        if not user == None and user.email() == ADMIN_ID:
+            self.response.write('<html><body>')
+            self.response.write(ADD_SENTENCE_TEMPLATE)
+            self.response.write('</body></html>')
+        else:
+            self.response.write('<html><body>Sorry, you must be ADMIN to access this page</body></html>')
+# [END AddSentence]
+
+# [START DoAddSentence]
+class DoAddSentence(webapp2.RequestHandler):
+    def post(self):
+        dict_name = self.request.get('dict_name', SENTENCEDICT)
+        sentence = Sentence(parent=dict_key(dict_name));
+        sentence.chichar        = self.request.get('sentencechichar')
+        sentence.translation    = self.request.get('sentencetranslation')
+        sentence.pronunciation  = self.request.get('sentencepronunciation')
+        sentence.put()
+
+        self.redirect("/viewsentence/" + sentence.key.urlsafe())
+# [END DoAddSentence]
+
+
 # [START EditSentence]
 class EditSentence(webapp2.RequestHandler):
     def get(self,sentenceid):
@@ -181,8 +212,8 @@ class EditSentence(webapp2.RequestHandler):
 # [START SaveSentence]
 class SaveSentence(webapp2.RequestHandler):
     def post(self,sentenceid):
-        save = self.request.get('save')
-        cancel = self.request.get('cancel')
+        save      = self.request.get('save')
+        cancel    = self.request.get('cancel')
         dict_name = self.request.get('dict_name', SENTENCEDICT)
         sentence_key = ndb.Key(urlsafe=sentenceid)
         # sentence = Sentence(parent=dict_key(dict_name));
@@ -197,20 +228,31 @@ class SaveSentence(webapp2.RequestHandler):
         self.redirect("/viewsentence/" + sentence.key.urlsafe())
 # [END SaveSentence]
     
+def deletesentence(request,sentenceid):
+    dict_name   = request.request.get('dict_name', SENTENCEDICT)
+    sentence_key = ndb.Key(urlsafe=sentenceid)
+    sentence     = sentence_key.get()
+    sentence.key.delete()
+
 
 # [START DeleteSentence]
 class DeleteSentence(webapp2.RequestHandler):
     def post(self,sentenceid):
-
-        dict_name = self.request.get('dict_name', SENTENCEDICT)
-        sentence_key = ndb.Key(urlsafe=sentenceid)
-        # sentence = Sentence(parent=dict_key(dict_name));
-        sentence = sentence_key.get()
-
-        # removestats(self,sentence)
-
-        sentence.key.delete()
-
+        deletesentence(self,sentenceid)
         self.redirect("/listsentences")
 # [END DeleteSentence]
 
+# [START StatSentences]
+class StatSentences(webapp2.RequestHandler):
+    def get(self):
+        self.response.write('<html><body>')
+        
+        dict_name      = self.request.get('dict_name',SENTENCEDICT)
+        sentences_query = Sentence.query(ancestor=dict_key(dict_name)).order(-Sentence.date)
+        sentences       = sentences_query.fetch()
+
+        # Write the submission form and the footer of the page
+        self.response.write(STAT_SENTENCE_TEMPLATE % ( len(sentences) ))
+
+        self.response.write('</body></html>')
+# [END StatChiChars]

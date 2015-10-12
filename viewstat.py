@@ -40,14 +40,16 @@ class ListViewStats(webapp2.RequestHandler):
 # [END ListViewStat]
 
 
+def clearviewstats(request):
+    viewstats_query = ViewStat.query()
+    viewstats = viewstats_query.fetch()        
+    for viewstat in viewstats:
+        viewstat.key.delete()
+    
+
 # [START ClearViewStats]
 class ClearViewStats(webapp2.RequestHandler):
     def post(self):
-        viewstats_query = ViewStat.query()
-        viewstats = viewstats_query.fetch()
-        
-        for viewstat in viewstats:
-            viewstat.key.delete()
-
+        clearviewstats()
         self.redirect('/')
 # [END ClearViewStats]
