@@ -49,6 +49,11 @@ VIEW_CHI_CHAR_ADMIN_TEMPLATE = """\
     </form>
     </td>
     <td>
+    <form action="/strokechichar/%s" method="get">
+       <div class="charaction"><input type="submit" value="Stroke"></div>
+    </form>
+    </td>
+    <td>
     <form action="/deletechichar/%s" method="post">
       <div class="charaction"><input type="submit" value="Delete"></div>
     </form>
@@ -203,4 +208,47 @@ LOAD_CHICHARS = """\
       <div><textarea name="chichars" rows="10" cols="40"></textarea></div>
       <div><input type="submit" value="Load chichars"></div>
    </form>
+"""
+
+CHICHAR_STROKE_TEMPLATE = """\
+<head>
+  <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
+</head>
+    <div align="center">
+    <h1>%s Strokes</h1>
+    <hr>
+    <div id="chicharcanvas"></div>
+    <script type="text/javascript" src="/javascript/others/webgl-utils.js"></script>
+    <script type="text/javascript" src="/javascript/others/sylvester.js"></script>
+    <script type="text/javascript" src="/javascript/jsvg/myquadtree.js"></script>
+    <script type="text/javascript" src="/javascript/jsvg/utils.js"></script>
+    <script type="text/javascript" src="/javascript/jsvg/color.js"></script>
+    <script type="text/javascript" src="/javascript/jsvg/geoutils.js"></script>
+    <script type="text/javascript" src="/javascript/jsvg/bside.js"></script>
+    <script type="text/javascript" src="/javascript/jsvg/mywebgl.js"></script>
+    <script type="text/javascript" src="/javascript/jsvg/bpatternbao.js"></script>
+    <script type="text/javascript" src="/javascript/drawing/chicharcanvas.js"></script>
+    <hr>
+    <table>
+    <tr>
+    <td>
+    <form action="/clearstrokechichar/%s" method="post">
+       <div><input type="submit" value="Clear"></div>
+   </form>
+   </td>
+   <td>
+    <form action="/savestrokechichar/%s" method="post">
+       <textarea name="charnstrokes" style="display:none;">%s</textarea>
+       <textarea name="charstrokes" style="display:none;">%s</textarea>
+      <div><input type="submit" value="Save"></div>
+   </form>
+   </td>
+   <td>
+    <form action="/viewchichar/%s" method="get">
+       <div><input type="submit" value="View"></div>
+   </form>
+   </td>
+   </tr>
+   </table>
+   </div>
 """

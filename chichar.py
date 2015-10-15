@@ -7,6 +7,7 @@ from mydicts          import *
 from chichartemplates import *
 from myschemas        import *
 from myadmin          import *
+from modelutils       import *
 
 from viewstat         import *
 
@@ -65,13 +66,10 @@ class AddChiChar(webapp2.RequestHandler):
 # [START DoAddChiChar]
 class DoAddChiChar(webapp2.RequestHandler):
     def post(self):
-        dict_name = self.request.get('dict_name', CHICHARDICT)
-        chichar = Chichar(parent=dict_key(dict_name));
-        chichar.chichar        = self.request.get('chichar')
-        chichar.translation    = self.request.get('translation')
-        chichar.pronunciation  = self.request.get('pronunciation')
-        chichar.put()
-
+        char           = self.request.get('chichar')
+        translation    = self.request.get('translation')
+        pronunciation  = self.request.get('pronunciation')
+        chichar = addchichar(self,char,translation,pronunciation)
         self.redirect("/viewchichar/" + chichar.key.urlsafe())
 # [END DoAddChiChar]
 
@@ -119,7 +117,7 @@ class ViewChiChar(webapp2.RequestHandler):
             viewstat.put()
 
         if not user == None and user.email() == ADMIN_ID:
-            self.response.write(VIEW_CHI_CHAR_ADMIN_TEMPLATE % ( chichar.chichar, chichar.pronunciation, chichar.translation,chichar.key.urlsafe(),chichar.key.urlsafe(),chichar.key.urlsafe()))
+            self.response.write(VIEW_CHI_CHAR_ADMIN_TEMPLATE % ( chichar.chichar, chichar.pronunciation, chichar.translation, chichar.key.urlsafe(),chichar.key.urlsafe(),chichar.key.urlsafe(),chichar.key.urlsafe()))
         else:
             self.response.write(VIEW_CHI_CHAR_USER_TEMPLATE % ( chichar.chichar, chichar.pronunciation, chichar.translation, chichar.key.urlsafe()))
             
@@ -183,19 +181,15 @@ class StatChiChars(webapp2.RequestHandler):
     def get(self):
         self.response.write('<html><body>')
         
-        dict_name      = self.request.get('dict_name',CHICHARDICT)
-        chichars_query = Chichar.query(ancestor=dict_key(dict_name)).order(-Chichar.date)
-        chichars       = chichars_query.fetch()
+        chichars       = getallchichars(self)
 
         chicharfreq = {}
         for chichar in chichars:
             chicharfreq[chichar.chichar] = 0
 
-        sdict_name      = self.request.get('dict_name',SENTENCEDICT)
-        sentences_query = Sentence.query(ancestor=dict_key(sdict_name))
-        sentences       = sentences_query.fetch()
+        sentences = getallsentences(self)
         for sentence in sentences:
-            for chichar in sentence.charlist:
+            for chichar in getsentencechichars(self,sentence):
                 chicharfreq[chichar.chichar] += 1
 
         sortlist = [(chicharfreq[char],char) for char in chicharfreq.keys()]
@@ -205,9 +199,7 @@ class StatChiChars(webapp2.RequestHandler):
         for freqchar5 in lsplit(lreverse(sortlist),5):
             charfreq = charfreq + "<tr>"
             for (freq,char) in freqchar5:
-                chichars_query = Chichar.query(Chichar.chichar == char)
-                qresult = chichars_query.fetch(1)
-                chichar = qresult[0]
+                chichar = getchichar(self,char)
                 charform = "<form action=\"/viewchichar/" + chichar.key.urlsafe() + "\" method=\"get\"><div><input type=\"submit\" value=\"" + chichar.chichar + "\"></div></form>"
                 charfreq = charfreq + "<td>" + charform + "</td><td> </td><td>" + str(freq) + "</td> <td></td>"
             charfreq = charfreq + "</tr>"
@@ -292,6 +284,51 @@ class LoadChichars(webapp2.RequestHandler):
         self.response.write('</body></html>')
 
 # [END LoadChichars]
+
+
+# [START StrokeChiChar]
+class StrokeChiChar(webapp2.RequestHandler):
+    def get(self,chicharid):
+        self.response.write('<html><body>')
+
+        chichar_key = ndb.Key(urlsafe=chicharid)
+        chichar     = chichar_key.get()
+
+        self.response.write(CHICHAR_STROKE_TEMPLATE % ( chichar.chichar, chicharid, chicharid, chichar.nstrokes, chichar.strokes, chicharid ) )
+        self.response.write('</body></html>')
+# [END StrokeChiChar]
+
+# [START SaveStrokeChiChar]
+class SaveStrokeChiChar(webapp2.RequestHandler):
+    def post(self,chicharid):
+        chichar_key = ndb.Key(urlsafe=chicharid)
+        chichar     = chichar_key.get()
+
+        nstrokes = self.request.get("charnstrokes");
+        strokes  = self.request.get("charstrokes");
+
+        puts("nstrokes",nstrokes,"strokes",strokes)
+        
+        chichar.nstrokes = nstrokes;
+        chichar.strokes  = strokes;
+        chichar.put()
+
+        self.redirect("/strokechichar/" + chicharid)
+# [END SaveStrokeChiChar]
+
+# [START ClearStrokeChiChar]
+class ClearStrokeChiChar(webapp2.RequestHandler):
+    def post(self,chicharid):
+        chichar_key = ndb.Key(urlsafe=chicharid)
+        chichar     = chichar_key.get()
+
+        chichar.nstrokes = "0";
+        chichar.strokes  = "";
+        chichar.put()
+
+        self.redirect("/strokechichar/" + chicharid)
+# [END SaveStrokeChiChar]
+
 
 
 
