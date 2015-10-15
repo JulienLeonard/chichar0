@@ -1,89 +1,116 @@
-var canvasname    = "chicharcanvas";
-var canvas        = null;
-var mycanvasitem    = null;
 
-function Chichar() {
-	this.strokes = [];
+function chicharcanvas() {
+	this.canvasframe = null;
+	this.canvas = null;
+	this.viewviewbox = [-10.0,-10.0, 10.0,10.0];
+	this.background = Color.prototype.white();
+	this.savecoords    = null;
+	this.coordindex    = null;
+	this.currentstroke = null;
+	this.chichar       = null;
 }
 
-function Stroke() {
-	this.points = []
-}
+//
+// must return a function to iterframe
+//
+chicharcanvas.prototype.init = function(canvasname,strokediv, nstrokediv, w,h,isactive) {
+	console.log("chicharcanvas.prototype.init this " + this + " this.canvasframe " + this.canvasframe);
 
+	this.canvas = initcanvas(canvasname,w,h,this.background);
 
-function chidrawcircle(canvas,x,y) {
-	drawcircle(canvas,circle(x,y,1.0),Color.prototype.black(0.1));
-}
+	resetviewbox(this.canvas,this.viewviewbox);
 
-function context() {
+	this.canvasframe = canvasitem(canvasname);
 
-	var w = 750,
-		h = 750,
-	    background = Color.prototype.white();
-	
+	this.strokediv  = strokediv;
+	this.nstrokediv = nstrokediv;
+};
 
-	canvas = initcanvas(canvasname,w,h,background);
+chicharcanvas.prototype.fiterstroke = function() {
 
-	viewviewbox = [-10.0,-10.0, 10.0,10.0];
+	resetviewbox(this.canvas,this.viewviewbox);
 
-	resetviewbox(canvas,viewviewbox);
-
-	mycanvasitem = canvasitem(canvasname);
-
-	chichar = new Chichar();
-
-	currentstroke = null;
-	
-	var getcenteredcoords = function(e) {
-		var rect = mycanvasitem.getBoundingClientRect();
-		var mouseX = e.clientX - rect.left;
-        var mouseY = e.clientY - rect.top;
-        var x =   (mouseX / mycanvasitem.width) * 2 - 1;
-        var y = - (mouseY / mycanvasitem.height) * 2 + 1;
-		return new Point(x,y);
-	}
-
-	var touchdowndrawcircle = function(e) {
-		p = getcenteredcoords(e)
-		chidrawcircle(canvas,p.x * 10.0, p.y * 10.0);
-		currentstroke = new Stroke();
-		currentstroke.points.push(p)
-	};
-
-	var touchupdrawcircle = function(e) {
-		chichar.strokes.push(currentstroke);
-		currentstroke = null;
-	};
-
-	var movedrawcircle = function(e) {
-		if (currentstroke) {
-			p = getcenteredcoords(e)
-			chidrawcircle(canvas,p.x * 10.0, p.y * 10.0);
-			currentstroke.points.push(p)
+	if (this.chichar == null && this.savecoords == null) {
+		var scoords = document.getElementsByName(this.strokediv)[0].value;
+		console.log("scoords" + scoords.length);
+		if (scoords != null && scoords.length > 0) {
+			this.savecoords     = scoords.split(",");
+			this.coordindex = 0;
 		}
-	};
-
-
-
-	bindcanvas(mycanvasitem,"mousedown",touchdowndrawcircle, false);
-	bindcanvas(mycanvasitem,"mousemove",movedrawcircle,      false);
-	bindcanvas(mycanvasitem,"mouseup",  touchupdrawcircle,   false);
-
-	bindcanvas(mycanvasitem,"touchstart",touchdowndrawcircle, false);
-	bindcanvas(mycanvasitem,"touchmove", movedrawcircle,      false);
-	bindcanvas(mycanvasitem,"touchend",  touchupdrawcircle,   false);
-
-
-	function iterframe() {
-
-		viewviewbox = [-10.0,-10.0, 10.0,10.0];
-
-		resetviewbox(canvas,viewviewbox);
-
-		return relaunchloop(true,iterframe);		
 	}
 
-	return iterframe;
+	if (this.savecoords != null && this.coordindex < this.savecoords.length) {
+		if (this.savecoords[this.coordindex] == ";") {
+			this.coordindex += 2;
+		}
+		p = new Point(this.savecoords[this.coordindex],this.savecoords[this.coordindex+1]);
+		chidrawcircle(this.canvas,p.x, p.y);
+		this.coordindex += 2;
+	}
+
+};
+
+
+chicharcanvas.prototype.ftouchdowndrawcircle = function(e) {
+	console.log("trigger touchdowndrawcircle this " + this + " canvaframe " + this.canvasframe);
+	this.savecoords = null;
+	
+	if (this.chichar == null) {
+		this.chichar = new Chichar();
+		this.currentstroke = null;
+	}
+
+	var p = getcenteredcoords(this.canvasframe,e)
+	chidrawcircle(this.canvas,p.x, p.y);
+	
+	this.currentstroke = new Stroke();
+	this.currentstroke.points.push(p);
+	e.preventDefault();
+};
+
+
+chicharcanvas.prototype.ftouchupdrawcircle = function(e) {
+	this.chichar.strokes.push(this.currentstroke);
+		
+	document.getElementsByName(this.nstrokediv)[0].value = this.chichar.strokes.length;
+		
+	var lcoords = [];
+	for (var i = 0; i < this.chichar.strokes.length; i++) {
+		var stroke = this.chichar.strokes[i];
+		for (var j = 0; j < stroke.points.length; j++) {
+			lcoords.push(stroke.points[j].x);
+			lcoords.push(stroke.points[j].y);
+		}
+		lcoords.push(";,;");
+	}
+	var sstrokes = lcoords.join(',');
+	
+	document.getElementsByName(this.strokediv)[0].value = sstrokes;
+	
+	this.currentstroke = null;
+};
+
+
+chicharcanvas.prototype.fmovedrawcircle = function(e) {
+	if (this.currentstroke) {
+		var p = getcenteredcoords(this.canvasframe,e)
+		chidrawcircle(this.canvas,p.x, p.y);
+		this.currentstroke.points.push(p)
+	}
+	e.preventDefault();
+};
+
+
+
+chicharcanvas.prototype.attachevents = function(cccanvas) {
+	console.log("attachevents cccanvas " + this + " canvas " + this.canvas + " canvasframe " + this.canvasframe);
+
+	bindcanvas(this.canvasframe, "mousedown", this.ftouchdowndrawcircle.bind(this), false);
+	bindcanvas(this.canvasframe, "mousemove", this.fmovedrawcircle.bind(this),      false);
+	bindcanvas(this.canvasframe, "mouseup",   this.ftouchupdrawcircle.bind(this),   false);
+
+	bindcanvas(this.canvasframe, "touchstart",this.ftouchdowndrawcircle.bind(this), false);
+	bindcanvas(this.canvasframe, "touchmove", this.fmovedrawcircle.bind(this),      false);
+	bindcanvas(this.canvasframe, "touchend",  this.ftouchupdrawcircle.bind(this),   false);
 }
 
-startanim(context());

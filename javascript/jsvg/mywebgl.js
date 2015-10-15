@@ -261,7 +261,6 @@ function initfornextbatch(gl)
 }
 
 function startanim(fframe) {
-	// d3.timer(fframe);
     requestAnimFrame(fframe);
 }
 
@@ -272,12 +271,9 @@ function relaunchloop(conditionresult,flaunch) {
 }
 
 function bindcanvas(canvas,event,f,condition) {
-	// canvas.on(event,f,condition);
-	// TODO
 	canvas.addEventListener(event, function(event){f(event);},false);
 }
 
 function myhsla(h,s,l,a) {
-	// return d3.hsl(h,s,l);
 	return (new Color()).hsla(h,s,l,a);
 }
