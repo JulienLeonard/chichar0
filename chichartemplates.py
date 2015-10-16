@@ -227,7 +227,9 @@ CHICHAR_STROKE_TEMPLATE = """\
     <script type="text/javascript" src="/javascript/jsvg/bside.js"></script>
     <script type="text/javascript" src="/javascript/jsvg/mywebgl.js"></script>
     <script type="text/javascript" src="/javascript/jsvg/bpatternbao.js"></script>
+    <script type="text/javascript" src="/javascript/drawing/chicharutils.js"></script>
     <script type="text/javascript" src="/javascript/drawing/chicharcanvas.js"></script>
+    <script type="text/javascript" src="/javascript/drawing/chicharstroke.js"></script>
     <hr>
     <table>
     <tr>

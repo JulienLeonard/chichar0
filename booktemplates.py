@@ -17,7 +17,7 @@ VIEW_BOOK_TEMPLATE = """\
 <head>
   <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
 </head>
-    <div align="center">
+    <div>
     <h1>Book</h1>
     <hr>
     <table>
@@ -31,16 +31,11 @@ VIEW_BOOK_TEMPLATE = """\
     </tr>
     </table>
     <hr>
-    <h2>Chapters</h2>
-    %s
+    <form action="/exportbook/%s" method="get">
+      <div><input type="submit" value="Export"></div>
+    </form> 
     <hr>
-    <h2>Chars</h2>
-    %s
-    <hr>
-    <h2>Words</h2>
-    %s
-    <hr>
-    <h2>Sentences</h2>
+    <h2>Content</h2>
     %s
     <hr>
     <form action="/" method="get">

@@ -14,11 +14,6 @@ MAIN_PAGE_ADMIN_TEMPLATE = """\
     </form>
     </td>
     <td>
-    <form action="/mainload" method="get">
-      <div><input type="submit" value="Load"></div>
-    </form>
-    </td>
-    <td>
     <form action="/mainclear" method="post">
       <div><input type="submit" value="Clear"></div>
     </form>
@@ -26,6 +21,36 @@ MAIN_PAGE_ADMIN_TEMPLATE = """\
     </tr>
     </table>
     </div>
+
+
+    <h1>Books</h1> 
+    <div align="center">
+    <table>
+    <tr>
+    <td>
+    <form action="/listbooks" method="get">
+      <div><input type="submit" value="List"></div>
+    </form>
+    </td>
+    <td>
+    <form action="/loadbookpage" method="get">
+      <div><input type="submit" value="Load"></div>
+    </form>
+    </td>
+    <td>
+    <form action="/clearbooks" method="post">
+      <div><input type="submit" value="Clear"></div>
+    </form>
+    </td>
+    <td>
+    <form action="/statbooks" method="get">
+      <div><input type="submit" value="Stats"></div>
+    </form>
+    </td>
+    </tr>
+    </table>
+    </div>
+
 
     <h1>Chars</h1> 
     <div align="center">
@@ -42,18 +67,13 @@ MAIN_PAGE_ADMIN_TEMPLATE = """\
     </form>
     </td>
     <td>
-    <form action="/loadchicharfile" method="get">
-      <div><input type="submit" value="Load"></div>
-    </form>
-    </td>
-    <td>
-    <form action="/clearchichars" method="post">
-      <div><input type="submit" value="Clear"></div>
-    </form>
-    </td>
-    <td>
     <form action="/statchichars" method="get">
       <div><input type="submit" value="Stats"></div>
+    </form>
+    </td>
+    <td>
+    <form action="/exportchichars" method="get">
+      <div><input type="submit" value="Export"></div>
     </form>
     </td>
     </tr>
@@ -72,16 +92,6 @@ MAIN_PAGE_ADMIN_TEMPLATE = """\
     <td>
     <form action="/addword" method="get">
       <div><input type="submit" value="Add"></div>
-    </form>
-    </td>
-    <td>
-    <form action="/loadwordfile" method="get">
-      <div><input type="submit" value="Load"></div>
-    </form>
-    </td>
-    <td>
-    <form action="/clearwords" method="post">
-      <div><input type="submit" value="Clear"></div>
     </form>
     </td>
     <td>
@@ -108,16 +118,6 @@ MAIN_PAGE_ADMIN_TEMPLATE = """\
     </form>
     </td>
     <td>
-    <form action="/loadsentencefile" method="get">
-      <div><input type="submit" value="Load"></div>
-    </form>
-    </td>
-    <td>
-    <form action="/clearsentences" method="post">
-      <div><input type="submit" value="Clear"></div>
-    </form>
-    </td>
-    <td>
     <form action="/statsentences" method="get">
       <div><input type="submit" value="Stats"></div>
     </form>
@@ -140,11 +140,6 @@ MAIN_PAGE_ADMIN_TEMPLATE = """\
       <div><input type="submit" value="Def2Char"></div>
     </form>
     </td>
-    <td>
-    <form action="/charteststats" method="get">
-      <div><input type="submit" value="CharTestStats"></div>
-    </form>
-    </td>
     </tr>
     </table>
     </div>
@@ -159,8 +154,8 @@ MAIN_PAGE_ADMIN_TEMPLATE = """\
     </form>
     </td>
     <td>
-    <form action="/clearviewstats" method="post">
-      <div><input type="submit" value="Clear"></div>
+    <form action="/charteststats" method="get">
+      <div><input type="submit" value="CharTestStats"></div>
     </form>
     </td>
     </tr>
@@ -237,7 +232,7 @@ SEARCH_GENERAL = """\
    <h1>Sentences</h1>
    %s
    <hr>
-    <form action="/" method="post">
+    <form action="/" method="get">
       <div><input type="submit" value="Home"></div>
    </form>
 """
