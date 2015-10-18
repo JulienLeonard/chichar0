@@ -77,11 +77,11 @@ def asciitoremove():
     return [""," ","\n","\t",",",".","!","4","?"]
 
 def sentence2chars(charstring):
-    chars  = lsubstract(list(charstring.strip()),     asciitoremove())
+    chars  = lsubstract(list(charstring.strip()),asciitoremove())
     return chars
 
 def sentence2pinyins(charstring):
-    pinyins  = lsubstract(list(charstring.strip()),     asciitoremove())
+    pinyins  = lsubstract(list(charstring.strip()),asciitoremove())
     return pinyins
 
 
@@ -120,6 +120,17 @@ def checkaddchar(request,char,translation,pronunciation):
         result = ochichar
     return result
 
+def makepronunciation(chi,pinyins):
+    index = 0
+    result = ""
+    for char in list(chi):
+        if char in asciitoremove():
+            result = result + char
+        else:
+            result = result + pinyins[index]
+            index += 1
+    return result
+
 def checkaddsentence(request,chi,translation,pronunciation):
     osentence = getsentence(request,chi)
 
@@ -132,7 +143,7 @@ def checkaddsentence(request,chi,translation,pronunciation):
             result = None
         else:
             request.response.write("need to add sentence " + chi)
-            result = addsentence(request,chi,translation,pronunciation)
+            result = addsentence(request,chi,translation,makepronunciation(chi,pinyins))
             for (char,pinyin) in zip(chars,pinyins):
                 chichar = checkaddchar(request,char,None,pinyin)
     else:
@@ -153,7 +164,7 @@ def checkaddword(request,chi,translation,pronunciation):
             result = None
         else:
             request.response.write("need to add word " + chi)
-            result = addword(request,chi,translation,pronunciation)
+            result = addword(request,chi,translation,makepronunciation(chi,pinyins))
             for (char,pinyin) in zip(chars,pinyins):
                 chichar = checkaddchar(request,char,None,pinyin)
     else:
@@ -186,3 +197,42 @@ def datatype(data):
     if isinstance(data,Word):
         return "Word"
     
+def removeduplicatechichars(request):
+    array = {}
+    for chichar in getallchichars(request):
+        if not chichar.chichar in array:
+            array[chichar.chichar] = []
+        array[chichar.chichar].append(chichar)
+    
+    for char in array:
+        if len(array[char]) > 1:
+            for chichar in array[char]:
+                if chichar.translation == None:
+                    chichar.key.delete()
+
+def getbook(request,bookname):
+    books_query = Book.query(Book.name == bookname)
+    qresult = books_query.fetch(1)
+    if len(qresult) > 0:
+        return qresult[0]
+    return None
+
+def getchapter(request,bookname,chaptername):
+    chapters_query = Chapter.query(Chapter.book == bookname, Chapter.name == chaptername)
+    qresult = chapters_query.fetch(1)
+    if len(qresult) > 0:
+        return qresult[0]
+    return None
+
+def getunit(request,chaptername,chichar):
+    units_query = Unit.query(Unit.chapter == chaptername, Unit.chichar == chichar)
+    qresult = units_query.fetch(1)
+    if len(qresult) > 0:
+        return qresult[0]
+    return None
+
+def getunitdata(request,unit):
+    return ndb.Key(urlsafe=unit.unitkey).get()
+
+
+

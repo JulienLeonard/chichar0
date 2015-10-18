@@ -16,6 +16,11 @@ indexes:
   - name: date
     direction: desc
 
+- kind: Chapter
+  properties:
+  - name: book
+  - name: date
+
 - kind: CharTest
   ancestor: yes
   properties:
@@ -43,6 +48,11 @@ indexes:
   properties:
   - name: date
     direction: desc
+
+- kind: Unit
+  properties:
+  - name: chapter
+  - name: date
 
 - kind: ViewStat
   properties:

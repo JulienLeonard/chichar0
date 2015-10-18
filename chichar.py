@@ -330,6 +330,19 @@ class ClearStrokeChiChar(webapp2.RequestHandler):
 # [END SaveStrokeChiChar]
 
 
+# [START ExportChiChar]
+class ExportChiChars(webapp2.RequestHandler):
+    def get(self):
+        self.response.write('<html><body>')
+        for chichar in getallchichars(self):
+            # self.response.write("<div>" + "@".join([chichar.chichar,chichar.translation,chichar.pronunciation.chichar.nstrokes,chichar.strokes]) + "</div>")
+            spronunciation = iff(chichar.pronunciation == None,"None",chichar.pronunciation)
+            stranslation = iff(chichar.translation == None,"None",chichar.translation)
+            snstrokes = iff(chichar.nstrokes == None,"None",str(chichar.nstrokes))
+            sstrokes  = iff(chichar.strokes == None,"None",chichar.strokes)
+            self.response.write("<div>" + "@".join([chichar.chichar,stranslation,spronunciation,snstrokes,sstrokes]) + "</div>")
+        self.response.write('</body></html>')
+# [END ExportChiChar]
 
 
 

@@ -11,14 +11,15 @@ class Unit(ndb.Model):
     """A main model for representing a learnable unit (type is Chichar, Sentence or Word)."""
     unittype = ndb.StringProperty(indexed=False)
     unitkey  = ndb.StringProperty(indexed=False)
+    chichar  = ndb.StringProperty(indexed=True)
+    chapter  = ndb.StringProperty(indexed=True)
     date     = ndb.DateTimeProperty(auto_now_add=True)
 
 class Chapter(ndb.Model):
     """A main model for representing a sequence of units to be trained."""
     name        = ndb.StringProperty(indexed=True)
     description = ndb.StringProperty(indexed=False)
-    units       = ndb.StructuredProperty(Unit,repeated=True)
-    book        = ndb.StructuredProperty(Book)
+    book        = ndb.StringProperty(indexed=True)
     date        = ndb.DateTimeProperty(auto_now_add=True)
 
 class Chichar(ndb.Model):

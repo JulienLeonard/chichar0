@@ -13,12 +13,50 @@ from utils       import *
 from modelutils  import *
 
 
+def addbook(request,bookname,bookdescription):
+    udict_name      = request.request.get('dict_name',USERDICT)
+    book = Book(parent=dict_key(udict_name));
+    book.name        = bookname
+    book.description = bookdescription
+    book.put()
+    return book
+        
+def addchapter(request,bookname,chaptername,chapterdescr):
+    udict_name      = request.request.get('dict_name',USERDICT)
+    chapter = Chapter(parent=dict_key(udict_name));
+    chapter.name        = chaptername;
+    chapter.description = chapterdescr;
+    chapter.book        = bookname;
+    chapter.put()
+    return chapter
+
+def addunit(request,chaptername,newdata):
+    udict_name      = request.request.get('dict_name',USERDICT)
+    unit = Unit(parent=dict_key(udict_name));
+    unit.unittype = datatype(newdata)
+    unit.unitkey  = newdata.key.urlsafe()
+    unit.chichar  = newdata.chichar
+    unit.chapter  = chaptername
+    unit.put()
+    return unit
+
+def checkcreateuserbook(request):
+    user = users.get_current_user()
+    if not user == None:
+         userbookname =  user.email() + "'s Book"
+         if getbook(request,userbookname) == None:
+             addbook(request,userbookname,"Your personal book")
+
+
+
 # [START ListBooks]
 class ListBooks(webapp2.RequestHandler):
     def get(self):
         self.response.write('<html><body>')
 
         sdict_name      = self.request.get('dict_name',USERDICT)
+
+        checkcreateuserbook(self)
 
         books_query = Book.query(ancestor=dict_key(sdict_name)).order(-Book.date)
         books       = books_query.fetch()
@@ -68,39 +106,46 @@ class LoadBook(webapp2.RequestHandler):
 
                 if len(parts) == 2:
                     if book == None:
-                        book = Book(parent=dict_key(udict_name));
-                        book.name        = parts[0].strip()
-                        book.description = parts[1].strip()
-                        book.put()
+                        bookname  = parts[0].strip()
+                        bookdescr = parts[1].strip()
+                        obook = getbook(self,bookname)
+                        if obook == None:
+                            book = addbook(self,bookname,bookdescr)
+                        else:
+                            self.response.write("<div>Book " + obook.name + " already known</div>" )
+                            book = obook
                     else:
-                        if not chapter == None:
-                            chapter.units = unitlist
-                            chapter.book  = book
-                            chapter.put()
-                            unitlist = []
-                        chapter = Chapter(parent=dict_key(udict_name));
-                        chapter.name        = parts[0].strip();
-                        chapter.description = parts[1].strip();
+                        chaptername  = parts[0].strip()
+                        chapterdescr = parts[1].strip()
+
+                        ochapter = getchapter(self,book.name,chaptername)
+                        if ochapter == None:
+                            chapter = addchapter(self,bookname,chaptername,chapterdescr)
+                        else:
+                            self.response.write("<div>   Chapter " + ochapter.name + " already known</div>" )
+                            chapter = ochapter
+
 
                 if len(parts) == 3:
                     chichar       = parts[0].strip()
                     translation   = parts[1].strip()
                     pronunciation = parts[2].strip()
             
-                    newdata = allocatedata(self,chichar,translation,pronunciation)
+                    ounit  = getunit(self,chapter.name,chichar)
 
-                    if newdata:
-                        unit = Unit(parent=dict_key(udict_name));
-                        unit.unittype = datatype(newdata)
-                        unit.unitkey  = newdata.key.urlsafe()
-                        unit.put()
-                        unitlist.append(unit)
+                    if ounit == None:
+                        newdata = allocatedata(self,chichar,translation,pronunciation)
+
+                        if newdata:
+                            unit = addunit(self,chaptername,newdata)
+                        else:
+                            self.response.write("<div>Cannot allocate " + dataline + "</div>")
                     else:
-                        self.response.write("Cannot allocate " + dataline )
-        
-        chapter.units = unitlist
-        chapter.book  = book
-        chapter.put()
+                        self.response.write("<div>Unit " + ounit.chichar + " already known</div>" )
+                        unit = ounit
+                        
+        removeduplicatechichars(self)
+
         self.response.write('</body></html>')
 
 # [END LoadBooks]
@@ -123,7 +168,8 @@ def clearbooks(request):
         
     for unit in units:
         deleteunit(request,unit.key.urlsafe())
-        
+
+    checkcreateuserbook(request)
         
 
 # [START ClearBooks]
@@ -146,20 +192,17 @@ class ViewBook(webapp2.RequestHandler):
         book_key   = ndb.Key(urlsafe=bookid)
         book = book_key.get()
 
-        chaptercontent  = "<table>"
-        chapters_query = Chapter.query().order(Chapter.date)
-        chapters       = chapters_query.fetch()
-        for chapter in chapters:
-            if chapter.book.name == book.name:
-                chaptercontent  = chaptercontent + "<tr>" + "<td>" + chapter.name + "</td><td>" + chapter.description + "</td>" + "</tr>\n"
-        chaptercontent  = chaptercontent + "</table>"
+        content  = "<table>"
+        chapters_query = Chapter.query(Chapter.book == book.name).order(Chapter.date)
+        for chapter in chapters_query.fetch():
+            content  = content + "<tr>" + "<td>" + chapter.name + "</td><td>" + "</td>" + "</tr>\n"
+            
+            for unit in Unit.query(Unit.chapter == chapter.name).order(Chapter.date):
+                content  = content + "<tr>" + "<td></td><td>" + unit.chichar + "</td></tr>\n"
 
-        charcontent     = "TODO"
-        wordcontent     = "TODO"
-        sentencecontent = "TODO"
+        content  = content + "</table>"
 
-        self.response.write(VIEW_BOOK_TEMPLATE % ( book.name, book.description, chaptercontent, charcontent, wordcontent, sentencecontent ))
-
+        self.response.write(VIEW_BOOK_TEMPLATE % ( book.name, book.description, book.key.urlsafe(), content ))
 
         self.response.write('</body></html>')
 # [END ViewBook]
@@ -216,3 +259,24 @@ class StatBooks(webapp2.RequestHandler):
 
         self.response.write('</body></html>')
 # [END StatChiChars]
+
+# [START ExportBook]
+class ExportBook(webapp2.RequestHandler):
+    def get(self,bookid):
+        self.response.write('<html><body>')
+
+        dict_name  = self.request.get('dict_name',USERDICT)
+        book_key   = ndb.Key(urlsafe=bookid)
+        book = book_key.get()
+
+        self.response.write("<div>" + ";".join([book.name,book.description]) + "</div>")
+        chapters_query = Chapter.query(Chapter.book == book.name).order(Chapter.date)
+        for chapter in chapters_query.fetch():
+            self.response.write("<div>" + ";".join([chapter.name,chapter.description]) + "</div>")
+
+            for unit in Unit.query(Unit.chapter == chapter.name).order(Chapter.date):
+                data = getunitdata(self,unit)
+                self.response.write("<div>" + ";".join([data.chichar,data.translation,data.pronunciation]) + "</div>")
+
+        self.response.write('</body></html>')
+# [END ExportBook]

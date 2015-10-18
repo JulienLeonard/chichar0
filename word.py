@@ -9,6 +9,7 @@ from myadmin     import *
 
 from wordtemplates import *
 from utils import *
+from modelutils import *
 
 def deleteword(request,wordid):
     dict_name   = request.request.get('dict_name', WORDDICT)
@@ -38,13 +39,8 @@ class ListWords(webapp2.RequestHandler):
         wordlist = wordlist + "<table>"
         for word in words:
             wordlist = wordlist + "\n<tr><td>" + word.chichar  +" </td><td> " + word.translation + "</td>"
-            for chichar in word.charlist:
-                chichars_query = Chichar.query(Chichar.chichar == chichar.chichar)
-                qresult = chichars_query.fetch(1)
-                if not len(qresult) == 0:
-                    ochichar = qresult[0]
-                    wordlist = wordlist + "<td><a href=\"/viewchichar/" + ochichar.key.urlsafe() + "\">" + ochichar.chichar + "</a></td>"
-
+            for ochichar in getwordchichars(self,word):
+                wordlist = wordlist + "<td><a href=\"/viewchichar/" + ochichar.key.urlsafe() + "\">" + ochichar.chichar + "</a></td>"
             viewwordform = "<form action=\"/viewword/" + word.key.urlsafe() + "\" method=\"get\"><div class=\"charaction\"><input type=\"submit\" value=\"+\"></div></form>"
             wordlist = wordlist + "<td>" + viewwordform + "</td>"
             wordlist = wordlist + "</tr>"
@@ -55,65 +51,6 @@ class ListWords(webapp2.RequestHandler):
         self.response.write('</body></html>')
 # [END ListWords]
 
-
-# [START LoadWordFile]
-class LoadWordFile(webapp2.RequestHandler):
-    def get(self):
-        self.response.write('<html><body>')
-
-        self.response.write(LOAD_WORDS)
-
-        self.response.write('</body></html>')
-# [END LoadWordFile]
-
-# [START LoadWords]
-class LoadWords(webapp2.RequestHandler):
-    def post(self):
-        self.response.write('<html><body>')
-
-        sdict_name = self.request.get('dict_name', WORDDICT)
-
-        for word in self.request.get('words').split("\n"):
-            if len(word) > 0:
-                
-                parts = word.split("\t")
-                self.response.write("<div> new word</div>")
-                for part in parts:
-                    self.response.write("<div>  " + part + "</div>\n")
-
-                if len(parts) == 3:
-                    chichars  = lsubstract(list(parts[0].strip()),     [""," ","\n","\t",",","."])
-                    pinyins   = lsubstract(parts[2].strip().split(" "),[""," ","\n","\t",",","."])
-                    if not (len(chichars) == len(pinyins)):
-                        self.response.write("<div>  error matching char " + "@".join(chichars) + " pynyin " + "@".join(pinyins) + "</div>\n")
-                    else:
-                        oword = Word(parent=dict_key(sdict_name));
-                        oword.chichar        = parts[0].strip()
-                        oword.translation    = parts[1].strip()
-                        oword.pronunciation  = parts[2].strip()
-
-                        charlist = []
-                        cdict_name = self.request.get('dict_name', CHICHARDICT)
-                        for (chi,pinyin) in zip(chichars,pinyins):
-                            chichars_query = Chichar.query(Chichar.chichar == chi)
-                            qresult = chichars_query.fetch(1)
-                            if len(qresult) == 0:
-                                self.response.write("need to add " + chi)
-                                chichar = Chichar(parent=dict_key(cdict_name))
-                                chichar.chichar        = chi
-                                chichar.translation    = "TODO"
-                                chichar.pronunciation  = pinyin
-                                chichar.put()
-                                charlist.append(chichar)
-                            else:
-                                charlist.append(qresult[0])
-                            
-            
-                        oword.charlist = charlist
-                        oword.put()
-
-
-        self.response.write('</body></html>')
 
 # [END LoadWords]
 
@@ -161,7 +98,7 @@ class ViewWord(webapp2.RequestHandler):
 
         
         wordchars = "<table>"
-        for chichar10 in lsplit(word.charlist,10):
+        for chichar10 in lsplit(getwordchichars(self,word),10):
             wordchars = wordchars + "<tr>"
             for lchichar in chichar10:
                 chichars_query = Chichar.query(Chichar.chichar == lchichar.chichar)

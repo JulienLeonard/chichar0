@@ -9,6 +9,7 @@ from myadmin     import *
 
 from sentencetemplates import *
 from utils import *
+from modelutils import *
 
 # [START ListSentences]
 class ListSentences(webapp2.RequestHandler):
@@ -25,12 +26,8 @@ class ListSentences(webapp2.RequestHandler):
         sentencelist = sentencelist + "<table>"
         for sentence in sentences:
             sentencelist = sentencelist + "\n<tr><td>" + sentence.chichar  +" </td><td> " + sentence.translation + "</td>"
-            for chichar in sentence.charlist:
-                chichars_query = Chichar.query(Chichar.chichar == chichar.chichar)
-                qresult = chichars_query.fetch(1)
-                if not len(qresult) == 0:
-                    ochichar = qresult[0]
-                    sentencelist = sentencelist + "<td><a href=\"/viewchichar/" + ochichar.key.urlsafe() + "\">" + ochichar.chichar + "</a></td>"
+            for ochichar in getsentencechichars(self,sentence):
+                sentencelist = sentencelist + "<td><a href=\"/viewchichar/" + ochichar.key.urlsafe() + "\">" + ochichar.chichar + "</a></td>"
             viewsentenceform = "<form action=\"/viewsentence/" + sentence.key.urlsafe() + "\" method=\"get\"><div class=\"charaction\"><input type=\"submit\" value=\"+\"></div></form>"
             sentencelist = sentencelist + "<td>" + viewsentenceform + "</td>"
             sentencelist = sentencelist + "</tr>"
@@ -41,67 +38,6 @@ class ListSentences(webapp2.RequestHandler):
         self.response.write('</body></html>')
 # [END ListSentences]
 
-
-# [START LoadSentenceFile]
-class LoadSentenceFile(webapp2.RequestHandler):
-    def get(self):
-        self.response.write('<html><body>')
-
-        self.response.write(LOAD_SENTENCES)
-
-        self.response.write('</body></html>')
-# [END LoadSentenceFile]
-
-# [START LoadSentences]
-class LoadSentences(webapp2.RequestHandler):
-    def post(self):
-        self.response.write('<html><body>')
-
-        sdict_name = self.request.get('dict_name', SENTENCEDICT)
-
-        for sentence in self.request.get('sentences').split("\n"):
-            if len(sentence) > 0:
-                
-                parts = sentence.split("\t")
-                self.response.write("<div> new sentence</div>")
-                for part in parts:
-                    self.response.write("<div>  " + part + "</div>\n")
-
-                if len(parts) == 3:
-                    chichars  = lsubstract(list(parts[0].strip()),     [""," ","\n","\t",",","."])
-                    pinyins   = lsubstract(parts[2].strip().split(" "),[""," ","\n","\t",",","."])
-                    if not (len(chichars) == len(pinyins)):
-                        self.response.write("<div>  error matching char " + "@".join(chichars) + " pynyin " + "@".join(pinyins) + "</div>\n")
-                    else:
-                        osentence = Sentence(parent=dict_key(sdict_name));
-                        osentence.chichar        = parts[0].strip()
-                        osentence.translation    = parts[1].strip()
-                        osentence.pronunciation  = parts[2].strip()
-
-                        charlist = []
-                        cdict_name = self.request.get('dict_name', CHICHARDICT)
-                        for (chi,pinyin) in zip(chichars,pinyins):
-                            chichars_query = Chichar.query(Chichar.chichar == chi)
-                            qresult = chichars_query.fetch(1)
-                            if len(qresult) == 0:
-                                self.response.write("need to add " + chi)
-                                chichar = Chichar(parent=dict_key(cdict_name))
-                                chichar.chichar        = chi
-                                chichar.translation    = "TODO"
-                                chichar.pronunciation  = pinyin
-                                chichar.put()
-                                charlist.append(chichar)
-                            else:
-                                charlist.append(qresult[0])
-                            
-            
-                        osentence.charlist = charlist
-                        osentence.put()
-
-
-        self.response.write('</body></html>')
-
-# [END LoadSentences]
 
 def clearsentences(request):
     sentence        = Sentence()
@@ -147,7 +83,7 @@ class ViewSentence(webapp2.RequestHandler):
 
         
         sentencechars = "<table>"
-        for chichar10 in lsplit(sentence.charlist,10):
+        for chichar10 in lsplit(getsentencechichars(self,sentence),10):
             sentencechars = sentencechars + "<tr>"
             for lchichar in chichar10:
                 chichars_query = Chichar.query(Chichar.chichar == lchichar.chichar)

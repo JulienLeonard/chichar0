@@ -15,6 +15,9 @@ from word        import *
 from viewstat    import *
 from chartest    import *
 from drawing     import *
+from book        import *
+from modelutils  import *
+from formatutils import *
 
 from maintemplates import *
 
@@ -39,18 +42,6 @@ class MainPage(webapp2.RequestHandler):
 
         self.response.write('</body></html>')
 # [END main_page]
-
-def tableclickchichars(chichars):
-    result = "<table>"
-    for chichar10 in lsplit(chichars,10):
-        result += "<tr>"
-        for chichar in chichar10:
-            result += "<td>"
-            result += "<form action=\"/viewchichar/" + chichar.key.urlsafe() + "\" method=\"get\"><div><input type=\"submit\" value=\"" + chichar.chichar + "\"></div></form>"
-            result += "</td>"
-        result += "</tr>"
-    result += "<table>"
-    return result
 
 # [BEGIN main_page]
 class MainSearch(webapp2.RequestHandler):
@@ -103,79 +94,6 @@ class MainLoad(webapp2.RequestHandler):
 # [END main_page]
 
 
-def checkaddchar(request,chi,translation,pronunciation):
-    cdict_name = request.request.get('dict_name', CHICHARDICT)
-    chichars_query = Chichar.query(Chichar.chichar == chi)
-    qresult = chichars_query.fetch(1)
-
-    charresult = None
-    if len(qresult) == 0:
-        request.response.write("need to add " + chi)
-        chichar = Chichar(parent=dict_key(cdict_name))
-        chichar.chichar        = chi
-        chichar.translation    = translation
-        chichar.pronunciation  = pronunciation
-        chichar.put()
-        charresult = chichar
-    else:
-        # TODO:check everything is the same  
-        request.response.write("char " + chi + " already known")
-        charresult = qresult[0]
-    return charresult
-
-def checkaddsentence(request,chi,translation,pronunciation):
-    sdict_name = request.request.get('dict_name', SENTENCEDICT)
-    sentences_query = Sentence.query(Sentence.chichar == chi)
-    qresult = sentences_query.fetch(1)
-    if len(qresult) == 0:
-        charlist = []
-        chichars  = lsubstract(list(chi.strip()),     [""," ","\n","\t",",","."])
-        pinyins   = lsubstract(pronunciation.strip().split(" "),[""," ","\n","\t",",","."])
-        if not (len(chichars) == len(pinyins)):
-            request.response.write("<div>  error matching char " + "@".join(chichars) + " pynyin " + "@".join(pinyins) + "</div>\n")
-        else:
-            request.response.write("need to add sentence " + chi)
-            osentence = Sentence(parent=dict_key(sdict_name));
-            osentence.chichar        = chi
-            osentence.translation    = translation
-            osentence.pronunciation  = pronunciation
-
-            for (chi,pinyin) in zip(chichars,pinyins):
-                char = checkaddchar(request,chi,None,pinyin)
-                charlist.append(char)
-            osentence.charlist = charlist
-            osentence.put()
-    else:
-        request.response.write("sentence " + chi + " already known")
-    
-
-def checkaddword(request,chi,translation,pronunciation):
-    wdict_name = request.request.get('dict_name', WORDDICT)
-    words_query = Word.query(Word.chichar == chi)
-    qresult = words_query.fetch(1)
-    if len(qresult) == 0:
-        charlist = []
-        chichars  = lsubstract(list(chi.strip()),     [""," ","\n","\t",",","."])
-        pinyins   = lsubstract(pronunciation.strip().split(" "),[""," ","\n","\t",",","."])
-        if not (len(chichars) == len(pinyins)):
-            request.response.write("<div>  error matching char " + "@".join(chichars) + " pynyin " + "@".join(pinyins) + "</div>\n")
-        else:
-            request.response.write("need to add word " + chi)
-            oword = Word(parent=dict_key(wdict_name));
-            oword.chichar        = chi
-            oword.translation    = translation
-            oword.pronunciation  = pronunciation
-
-            for (chi,pinyin) in zip(chichars,pinyins):
-                char = checkaddchar(request,chi,None,pinyin)
-                charlist.append(char)
-            oword.charlist = charlist
-            oword.put()
-    else:
-        request.response.write("word " + chi + " already known")
-    
-
-
 # [BEGIN main_page]
 class DoMainLoad(webapp2.RequestHandler):
     def post(self):
@@ -212,6 +130,7 @@ class MainClear(webapp2.RequestHandler):
         user = users.get_current_user()
 
         if user:
+            clearbooks(self)
             clearviewstats(self)
             clearchartests(self)
 
@@ -229,18 +148,20 @@ app = webapp2.WSGIApplication([
     ('/domainload',           DoMainLoad),
     ('/mainclear',            MainClear),
 
-    ('/listchichars',         ListChiChar),
-    ('/addchichar',           AddChiChar),
-    ('/doaddchichar',         DoAddChiChar),
-    ('/viewchichar/(.*)',     ViewChiChar),
-    ('/editchichar/(.*)',     EditChiChar),
-    ('/savechichar/(.*)',     SaveChiChar),
-    ('/deletechichar/(.*)',   DeleteChiChar),
-    ('/clearchichars',        ClearChiChars),
-    ('/loadchiccharfile',     LoadChicharFile),
-    ('/loadchichars',         LoadChichars),
-    ('/statchichars',         StatChiChars),
-    ('/chicharsentences/(.*)',ChiCharSentences),
+    ('/listchichars',            ListChiChar),
+    ('/addchichar',              AddChiChar),
+    ('/doaddchichar',            DoAddChiChar),
+    ('/viewchichar/(.*)',        ViewChiChar),
+    ('/editchichar/(.*)',        EditChiChar),
+    ('/savechichar/(.*)',        SaveChiChar),
+    ('/deletechichar/(.*)',      DeleteChiChar),
+    ('/clearchichars',           ClearChiChars),
+    ('/statchichars',            StatChiChars),
+    ('/chicharsentences/(.*)',   ChiCharSentences),
+    ('/strokechichar/(.*)',      StrokeChiChar),
+    ('/savestrokechichar/(.*)',  SaveStrokeChiChar),
+    ('/clearstrokechichar/(.*)', ClearStrokeChiChar),
+    ('/exportchichars',          ExportChiChars),
 
     ('/listsentences',        ListSentences),
     ('/addsentence',          AddSentence),
@@ -250,8 +171,6 @@ app = webapp2.WSGIApplication([
     ('/savesentence/(.*)',    SaveSentence),
     ('/deletesentence/(.*)',  DeleteSentence),
     ('/clearsentences',       ClearSentences),
-    ('/loadsentencefile',     LoadSentenceFile),
-    ('/loadsentences',        LoadSentences),
     ('/statsentences',        StatSentences),
 
     ('/listwords',        ListWords),
@@ -262,19 +181,28 @@ app = webapp2.WSGIApplication([
     ('/saveword/(.*)',    SaveWord),
     ('/deleteword/(.*)',  DeleteWord),
     ('/clearwords',       ClearWords),
-    ('/loadwordfile',     LoadWordFile),
-    ('/loadwords',        LoadWords),
     ('/statwords',        StatWords),
 
     ('/char2pinyintest',      Char2PinyinTest),
     ('/def2chartest',         Def2CharTest),
     ('/checkchar2pinyintest', CheckChar2PinyinTest),
     ('/checkdef2chartest',    CheckDef2CharTest),
+    ('/answerdef2chartest/(.*)',   AnswerDef2CharTest),
     ('/charteststats',        CharTestStats),
 
     ('/listviewstats',        ListViewStats),
     ('/clearviewstats',       ClearViewStats),
 
-    ('/sandboxdraw',          SandboxDraw),
+    ('/listbooks',       ListBooks),
+    ('/clearbooks',      ClearBooks),
+    ('/loadbookpage',    LoadBookPage),
+    ('/loadbook',        LoadBook),
+    ('/deletebook/(.*)', DeleteBook),
+    ('/viewbook/(.*)',   ViewBook),
+    ('/learnbook/(.*)',  LearnBook),
+    ('/statbooks',       StatBooks),
+    ('/exportbook/(.*)', ExportBook),
+
 
 ], debug=True)
+
