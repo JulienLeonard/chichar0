@@ -84,6 +84,10 @@ def sentence2pinyins(charstring):
     pinyins  = lsubstract(list(charstring.strip()),asciitoremove())
     return pinyins
 
+def sentence2pinyins2(charstring):
+    pinyins  = lsubstract(charstring.strip().split(" "),asciitoremove())
+    return pinyins
+
 
 def charsentence2chichars(request,charstring):
     result = []
@@ -136,7 +140,7 @@ def checkaddsentence(request,chi,translation,pronunciation):
 
     if osentence == None:
         chars  = sentence2chars(chi.strip())
-        pinyins = iff( pronunciation.strip() == "TODO", chars2pinyins(request,chars), sentence2pinyins(pronunciation))
+        pinyins = iff( pronunciation.strip() == "TODO", chars2pinyins(request,chars), sentence2pinyins2(pronunciation))
 
         if not (len(chars) == len(pinyins)):
             request.response.write("<div>  error matching char " + "@".join(chars) + " pynyin " + "@".join(pinyins) + "</div>\n")
@@ -157,18 +161,18 @@ def checkaddword(request,chi,translation,pronunciation):
 
     if oword == None:
         chars  = sentence2chars(chi.strip())
-        pinyins = iff( pronunciation.strip() == "TODO", chars2pinyins(request,chars), sentence2pinyins(pronunciation))
+        pinyins = iff( pronunciation.strip() == "TODO", chars2pinyins(request,chars), sentence2pinyins2(pronunciation))
 
         if not (len(chars) == len(pinyins)):
             request.response.write("<div>  error matching char " + "@".join(chars) + " pynyin " + "@".join(pinyins) + "</div>\n")
             result = None
         else:
-            request.response.write("need to add word " + chi)
+            request.response.write("<div>need to add word " + chi + "</div>")
             result = addword(request,chi,translation,makepronunciation(chi,pinyins))
             for (char,pinyin) in zip(chars,pinyins):
                 chichar = checkaddchar(request,char,None,pinyin)
     else:
-        request.response.write("word " + chi + " already known")
+        request.response.write("<div>word " + chi + " already known</div>")
         result = oword
 
     return result
